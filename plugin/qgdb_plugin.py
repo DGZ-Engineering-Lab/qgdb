@@ -15,6 +15,7 @@ class QGDBPlugin:
     def __init__(self, iface):
         self.iface = iface
         self.provider = None
+        self.actions = []
 
     def initGui(self):
         if not QGIS_AVAILABLE: return
@@ -28,16 +29,26 @@ class QGDBPlugin:
         except Exception as e:
             QgsMessageLog.logMessage(f"Error registrando proveedor QGDB: {e}", 'QGDB', Qgis.Warning)
 
-        # 2. Acción 1: Cargar .qgdb con estructura temática al Panel de Capas
+        # 2. Acción 1: Crear Nueva Geodatabase QGDB
+        self.action_new_qgdb = QAction("✨ Crear Nueva Geodatabase QGDB...", self.iface.mainWindow())
+        self.action_new_qgdb.triggered.connect(self.open_new_qgdb_dialog)
+        self.iface.addPluginToMenu("&QGDB Geodatabase", self.action_new_qgdb)
+        self.iface.addToolBarIcon(self.action_new_qgdb)
+        self.actions.append(self.action_new_qgdb)
+
+        # 3. Acción 2: Convertir ESRI GDB ➔ QGDB
+        self.action_convert_gdb = QAction("🔄 Convertir ESRI File Geodatabase (.gdb) a QGDB...", self.iface.mainWindow())
+        self.action_convert_gdb.triggered.connect(self.open_convert_gdb_dialog)
+        self.iface.addPluginToMenu("&QGDB Geodatabase", self.action_convert_gdb)
+        self.iface.addToolBarIcon(self.action_convert_gdb)
+        self.actions.append(self.action_convert_gdb)
+
+        # 4. Acción 3: Cargar .qgdb con estructura temática al Panel de Capas
         self.action_load_qgdb = QAction("📂 Cargar Geodatabase (.qgdb) con Estructura de Datasets", self.iface.mainWindow())
         self.action_load_qgdb.triggered.connect(self.load_qgdb_with_datasets)
         self.iface.addPluginToMenu("&QGDB Geodatabase", self.action_load_qgdb)
         self.iface.addToolBarIcon(self.action_load_qgdb)
-
-        # 3. Acción 2: Crear proyecto normativo LADM-COL
-        self.action_create_ladm = QAction("🇨🇴 Crear Proyecto QGDB (LADM-COL Colombia)", self.iface.mainWindow())
-        self.action_create_ladm.triggered.connect(self.create_ladm_col_project)
-        self.iface.addPluginToMenu("&QGDB Geodatabase", self.action_create_ladm)
+        self.actions.append(self.action_load_qgdb)
 
     def unload(self):
         if not QGIS_AVAILABLE: return
@@ -46,9 +57,27 @@ class QGDBPlugin:
                 QgsApplication.dataItemProviderRegistry().removeProvider(self.provider)
             except Exception:
                 pass
-        self.iface.removePluginMenu("&QGDB Geodatabase", self.action_load_qgdb)
-        self.iface.removePluginMenu("&QGDB Geodatabase", self.action_create_ladm)
-        self.iface.removeToolBarIcon(self.action_load_qgdb)
+        for action in self.actions:
+            self.iface.removePluginMenu("&QGDB Geodatabase", action)
+            self.iface.removeToolBarIcon(action)
+
+    def open_new_qgdb_dialog(self):
+        """Abre el diálogo gráfico para crear una nueva Geodatabase QGDB."""
+        try:
+            from .ui_dialogs import NewQGDBDialog
+        except Exception:
+            from ui_dialogs import NewQGDBDialog
+        dlg = NewQGDBDialog(self.iface.mainWindow())
+        dlg.exec_()
+
+    def open_convert_gdb_dialog(self):
+        """Abre el diálogo gráfico para convertir una File Geodatabase (.gdb) a .qgdb."""
+        try:
+            from .ui_dialogs import GDBConverterDialog
+        except Exception:
+            from ui_dialogs import GDBConverterDialog
+        dlg = GDBConverterDialog(self.iface.mainWindow())
+        dlg.exec_()
 
     def load_qgdb_with_datasets(self):
         """Abre un diálogo para seleccionar un archivo .qgdb y lo carga en el Panel de Capas estructurado por Datasets."""
@@ -107,30 +136,3 @@ class QGDBPlugin:
             )
         except Exception as e:
             QMessageBox.critical(self.iface.mainWindow(), "Error", f"Error cargando Geodatabase: {e}")
-
-    def create_ladm_col_project(self):
-        filename, _ = QFileDialog.getSaveFileName(self.iface.mainWindow(), "Crear Proyecto QGDB LADM-COL", "", "QGDB Files (*.qgdb *.qgpkg)")
-        if filename:
-            if not filename.endswith('.qgdb') and not filename.endswith('.qgpkg'):
-                filename += '.qgdb'
-            try:
-                import sqlite3
-                conn = sqlite3.connect(filename)
-                cursor = conn.cursor()
-                cursor.execute("CREATE TABLE IF NOT EXISTS qgdb_metadata (key TEXT PRIMARY KEY, value TEXT);")
-                cursor.execute("CREATE TABLE IF NOT EXISTS qgdb_datasets (id INTEGER PRIMARY KEY, name TEXT UNIQUE, title TEXT, description TEXT, icon TEXT);")
-                cursor.execute("CREATE TABLE IF NOT EXISTS qgdb_layers (id INTEGER PRIMARY KEY, dataset_name TEXT, layer_name TEXT UNIQUE, title TEXT, geometry_type TEXT, primary_key TEXT);")
-                cursor.execute("INSERT OR REPLACE INTO qgdb_metadata VALUES ('qgdb_version', '1.0');")
-                cursor.execute("INSERT OR REPLACE INTO qgdb_metadata VALUES ('profile', 'QGDB-LADM-COL');")
-                cursor.execute("INSERT OR REPLACE INTO qgdb_datasets (name, title) VALUES ('CATASTRO', 'Componente Catastral');")
-                cursor.execute("INSERT OR REPLACE INTO qgdb_datasets (name, title) VALUES ('JURIDICO', 'Componente Jurídico');")
-                cursor.execute("INSERT OR REPLACE INTO qgdb_layers (dataset_name, layer_name, title) VALUES ('CATASTRO', 'LC_Predio', 'Predios');")
-                cursor.execute("INSERT OR REPLACE INTO qgdb_layers (dataset_name, layer_name, title) VALUES ('CATASTRO', 'LC_Terreno', 'Terrenos');")
-                cursor.execute("INSERT OR REPLACE INTO qgdb_layers (dataset_name, layer_name, title) VALUES ('CATASTRO', 'LC_Construccion', 'Construcciones');")
-                cursor.execute("INSERT OR REPLACE INTO qgdb_layers (dataset_name, layer_name, title) VALUES ('JURIDICO', 'LC_Interesado', 'Interesados');")
-                cursor.execute("INSERT OR REPLACE INTO qgdb_layers (dataset_name, layer_name, title) VALUES ('JURIDICO', 'LC_Derecho', 'Derechos');")
-                conn.commit()
-                conn.close()
-                QMessageBox.information(self.iface.mainWindow(), "Éxito", f"Proyecto QGDB LADM-COL v3.0 creado en:\n{filename}")
-            except Exception as e:
-                QMessageBox.critical(self.iface.mainWindow(), "Error", f"No se pudo crear el proyecto: {e}")
