@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 import os
+import sys
 import sqlite3
+
+# Asegurar que el directorio del plugin esté en sys.path para importaciones directas
+plugin_dir = os.path.dirname(os.path.abspath(__file__))
+if plugin_dir not in sys.path:
+    sys.path.insert(0, plugin_dir)
+
 try:
     from qgis.PyQt.QtWidgets import (
         QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, 
@@ -14,6 +21,36 @@ try:
     QGIS_AVAILABLE = True
 except ImportError:
     QGIS_AVAILABLE = False
+
+
+def _get_qgdb_engine_class():
+    try:
+        from .core.qgdb_engine import QGDBEngine
+        return QGDBEngine
+    except Exception:
+        try:
+            from core.qgdb_engine import QGDBEngine
+            return QGDBEngine
+        except Exception:
+            # Importación absoluta desde plugin_dir
+            core_path = os.path.join(plugin_dir, "core")
+            if core_path not in sys.path: sys.path.insert(0, core_path)
+            from qgdb_engine import QGDBEngine
+            return QGDBEngine
+
+def _get_converter_class():
+    try:
+        from .converters.gdb2qgdb import GDB2QGDBConverter
+        return GDB2QGDBConverter
+    except Exception:
+        try:
+            from converters.gdb2qgdb import GDB2QGDBConverter
+            return GDB2QGDBConverter
+        except Exception:
+            conv_path = os.path.join(plugin_dir, "converters")
+            if conv_path not in sys.path: sys.path.insert(0, conv_path)
+            from gdb2qgdb import GDB2QGDBConverter
+            return GDB2QGDBConverter
 
 
 class NewQGDBDialog(QDialog):
@@ -105,12 +142,7 @@ class NewQGDBDialog(QDialog):
         profile_type = self.combo_profile.currentData()
         crs_auth = self.crs_widget.crs().authid() or "EPSG:9377"
 
-        try:
-            from .core.qgdb_engine import QGDBEngine
-            from .core.schema_builder import SchemaBuilder
-        except Exception:
-            from core.qgdb_engine import QGDBEngine
-            from core.schema_builder import SchemaBuilder
+        QGDBEngine = _get_qgdb_engine_class()
 
         # Construir especificación según el perfil seleccionado
         if profile_type == "LADM_COL":
@@ -118,8 +150,14 @@ class NewQGDBDialog(QDialog):
                 from .profiles.ladm_col import LADMCOLProfileBuilder
                 spec = LADMCOLProfileBuilder.get_ladm_col_spec()
             except Exception:
-                from profiles.ladm_col import LADMCOLProfileBuilder
-                spec = LADMCOLProfileBuilder.get_ladm_col_spec()
+                try:
+                    from profiles.ladm_col import LADMCOLProfileBuilder
+                    spec = LADMCOLProfileBuilder.get_ladm_col_spec()
+                except Exception:
+                    prof_path = os.path.join(plugin_dir, "profiles")
+                    if prof_path not in sys.path: sys.path.insert(0, prof_path)
+                    from ladm_col import LADMCOLProfileBuilder
+                    spec = LADMCOLProfileBuilder.get_ladm_col_spec()
             spec["metadata"]["crs"] = crs_auth
         elif profile_type == "CARTO_BASICA":
             spec = {
@@ -224,7 +262,6 @@ class GDBConverterDialog(QDialog):
         folder = QFileDialog.getExistingDirectory(self, "Seleccionar File Geodatabase ESRI (.gdb)")
         if folder:
             self.src_edit.setText(folder)
-            # Sugerir destino automático con el mismo nombre pero .qgdb
             default_dst = folder.rstrip("/\\") + ".qgdb"
             self.dst_edit.setText(default_dst)
 
@@ -252,11 +289,7 @@ class GDBConverterDialog(QDialog):
         QCoreApplication.processEvents()
 
         try:
-            try:
-                from .converters.gdb2qgdb import GDB2QGDBConverter
-            except Exception:
-                from converters.gdb2qgdb import GDB2QGDBConverter
-
+            GDB2QGDBConverter = _get_converter_class()
             converter = GDB2QGDBConverter(src_path, dst_path)
             converter.convert()
 
