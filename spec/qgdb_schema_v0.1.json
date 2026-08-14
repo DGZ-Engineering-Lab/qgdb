@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QGDB Standard Specification v0.1",
+  "description": "Especificación Abierta de Geodatabase Interoperable para QGIS sobre GeoPackage/SQLite",
+  "type": "object",
+  "properties": {
+    "qgdb_version": { "type": "string", "default": "0.1" },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "profile": { "type": "string" },
+        "crs": { "type": "string", "default": "EPSG:9377" },
+        "author": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["title", "profile", "crs"]
+    },
+    "datasets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "layers": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["name", "title", "layers"]
+      }
+    },
+    "domains": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "code": { "type": ["string", "integer"] },
+            "description": { "type": "string" }
+          },
+          "required": ["code", "description"]
+        }
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "parent_layer": { "type": "string" },
+          "parent_key": { "type": "string" },
+          "child_layer": { "type": "string" },
+          "child_key": { "type": "string" },
+          "cardinality": { "type": "string", "enum": ["1:1", "1:N", "N:M"] }
+        },
+        "required": ["name", "parent_layer", "parent_key", "child_layer", "child_key"]
+      }
+    },
+    "topology_rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "rule_type": { "type": "string", "enum": ["NO_OVERLAP", "MUST_BE_INSIDE", "NO_SELF_INTERSECT", "MUST_BE_COVERED_BY"] },
+          "layer_a": { "type": "string" },
+          "layer_b": { "type": "string" },
+          "severity": { "type": "string", "enum": ["ERROR", "WARNING"] }
+        },
+        "required": ["rule_type", "layer_a"]
+      }
+    }
+  },
+  "required": ["qgdb_version", "metadata", "datasets"]
+}

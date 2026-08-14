@@ -1,0 +1,104 @@
+{
+  "qgdb_version": "0.1",
+  "metadata": {
+    "title": "Catastro Multipropósito LADM-COL v3.0",
+    "profile": "QGDB-LADM-COL",
+    "crs": "EPSG:9377",
+    "author": "QGDB Framework Colombia",
+    "version": "3.0.0"
+  },
+  "datasets": [
+    {
+      "name": "CATASTRO",
+      "title": "Componente Catastral y Físico",
+      "description": "Geometría predial, terrenos, construcciones y unidades en propiedad horizontal",
+      "layers": ["LC_Predio", "LC_Terreno", "LC_Construccion", "LC_UnidadConstruccion"]
+    },
+    {
+      "name": "JURIDICO",
+      "title": "Componente Jurídico y Derechos",
+      "description": "Interesados, derechos de propiedad, restricciones y responsabilidades",
+      "layers": ["LC_Interesado", "LC_Derecho", "LC_Restriccion", "LC_Responsabilidad"]
+    }
+  ],
+  "domains": {
+    "DOM_DESTINO_ECONOMICO": [
+      { "code": "A", "description": "Habitacional" },
+      { "code": "B", "description": "Industrial" },
+      { "code": "C", "description": "Comercial" },
+      { "code": "D", "description": "Agropecuario" },
+      { "code": "E", "description": "Institucional" },
+      { "code": "F", "description": "Lote Urbanizable" }
+    ],
+    "DOM_TIPO_PREDIO": [
+      { "code": "1", "description": "Urbano" },
+      { "code": "2", "description": "Rural" }
+    ],
+    "DOM_TIPO_DERECHO": [
+      { "code": "01", "description": "Dominio / Propiedad" },
+      { "code": "02", "description": "Posesión" },
+      { "code": "03", "description": "Ocupación" },
+      { "code": "04", "description": "Usufructo" },
+      { "code": "05", "description": "Concesión" }
+    ],
+    "DOM_TIPO_RESTRICCION": [
+      { "code": "01", "description": "Servidumbre de Paso" },
+      { "code": "02", "description": "Servidumbre Eléctrica / RETIE" },
+      { "code": "03", "description": "Reserva Forestal / Ambiental" },
+      { "code": "04", "description": "Amenaza y Riesgo No Mitigable" },
+      { "code": "05", "description": "Embargo / Medida Cautelar" }
+    ],
+    "DOM_ESTADO_PREDIO": [
+      { "code": "ACTIVO", "description": "Predio Activo" },
+      { "code": "CANCELADO", "description": "Predio Cancelado (Englobe/Desenglobe)" },
+      { "code": "EN_TRAMITE", "description": "En Trámite Catastral" }
+    ]
+  },
+  "relationships": [
+    {
+      "name": "Predio_Terreno",
+      "parent_layer": "LC_Predio",
+      "parent_key": "npn",
+      "child_layer": "LC_Terreno",
+      "child_key": "npn_predio",
+      "cardinality": "1:1"
+    },
+    {
+      "name": "Predio_Construcciones",
+      "parent_layer": "LC_Predio",
+      "parent_key": "npn",
+      "child_layer": "LC_Construccion",
+      "child_key": "npn_predio",
+      "cardinality": "1:N"
+    },
+    {
+      "name": "Predio_Interesados",
+      "parent_layer": "LC_Predio",
+      "parent_key": "npn",
+      "child_layer": "LC_Interesado",
+      "child_key": "npn_predio",
+      "cardinality": "1:N"
+    },
+    {
+      "name": "Predio_Derechos",
+      "parent_layer": "LC_Predio",
+      "parent_key": "npn",
+      "child_layer": "LC_Derecho",
+      "child_key": "npn_predio",
+      "cardinality": "1:N"
+    },
+    {
+      "name": "Predio_Restricciones",
+      "parent_layer": "LC_Predio",
+      "parent_key": "npn",
+      "child_layer": "LC_Restriccion",
+      "child_key": "npn_predio",
+      "cardinality": "1:N"
+    }
+  ],
+  "topology_rules": [
+    { "rule_type": "NO_OVERLAP", "layer_a": "LC_Terreno", "severity": "ERROR" },
+    { "rule_type": "MUST_BE_INSIDE", "layer_a": "LC_Construccion", "layer_b": "LC_Terreno", "severity": "ERROR" },
+    { "rule_type": "NO_SELF_INTERSECT", "layer_a": "LC_Terreno", "severity": "ERROR" }
+  ]
+}

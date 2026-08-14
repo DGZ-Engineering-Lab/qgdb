@@ -1,0 +1,38 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Ambientes virtuales
+venv/
+env/
+ENV/
+
+# QGIS & Scratch
+scratch/
+*.qgdb
+*.qgpkg
+*.gdb
+*.zip
+.system_generated/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
