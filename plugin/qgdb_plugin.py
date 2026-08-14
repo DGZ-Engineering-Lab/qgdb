@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import sqlite3
+
 try:
     from qgis.PyQt.QtWidgets import QAction, QFileDialog, QMessageBox
     from qgis.PyQt.QtGui import QIcon
@@ -8,6 +9,7 @@ try:
     QGIS_AVAILABLE = True
 except ImportError:
     QGIS_AVAILABLE = False
+
 
 class QGDBPlugin:
     """Clase principal del Plugin QGDB Provider & Manager en QGIS."""
@@ -18,14 +20,19 @@ class QGDBPlugin:
         self.actions = []
 
     def initGui(self):
-        if not QGIS_AVAILABLE: return
+        if not QGIS_AVAILABLE:
+            return
 
         # 1. Registrar proveedor del panel navegador
         try:
             from .browser_provider import QGDBBrowserDataItemProvider
             self.provider = QGDBBrowserDataItemProvider()
             QgsApplication.dataItemProviderRegistry().addProvider(self.provider)
-            QgsMessageLog.logMessage("Proveedor de Formato QGDB (.qgdb) registrado en Panel Navegador.", "QGDB", Qgis.Info)
+            QgsMessageLog.logMessage(
+                "Proveedor de Formato QGDB (.qgdb) registrado en Panel Navegador.", 
+                "QGDB", 
+                Qgis.Info
+            )
         except Exception as e:
             QgsMessageLog.logMessage(f"Error registrando proveedor QGDB: {e}", 'QGDB', Qgis.Warning)
 
@@ -51,12 +58,13 @@ class QGDBPlugin:
         self.actions.append(self.action_load_qgdb)
 
     def unload(self):
-        if not QGIS_AVAILABLE: return
+        if not QGIS_AVAILABLE:
+            return
         if self.provider:
             try:
                 QgsApplication.dataItemProviderRegistry().removeProvider(self.provider)
-            except Exception:
-                pass
+            except Exception as e:
+                QgsMessageLog.logMessage(f"Aviso al descargar proveedor QGDB: {e}", "QGDB", Qgis.Info)
         for action in self.actions:
             self.iface.removePluginMenu("&QGDB Geodatabase", action)
             self.iface.removeToolBarIcon(action)
@@ -65,7 +73,7 @@ class QGDBPlugin:
         """Abre el diálogo gráfico para crear una nueva Geodatabase QGDB."""
         try:
             from .ui_dialogs import NewQGDBDialog
-        except Exception:
+        except ImportError:
             from ui_dialogs import NewQGDBDialog
         dlg = NewQGDBDialog(self.iface.mainWindow())
         dlg.exec_()
@@ -74,7 +82,7 @@ class QGDBPlugin:
         """Abre el diálogo gráfico para convertir una File Geodatabase (.gdb) a .qgdb."""
         try:
             from .ui_dialogs import GDBConverterDialog
-        except Exception:
+        except ImportError:
             from ui_dialogs import GDBConverterDialog
         dlg = GDBConverterDialog(self.iface.mainWindow())
         dlg.exec_()
@@ -87,7 +95,8 @@ class QGDBPlugin:
             "", 
             "QGDB Files (*.qgdb *.qgpkg)"
         )
-        if not filename: return
+        if not filename:
+            return
 
         try:
             conn = sqlite3.connect(filename)
@@ -113,7 +122,8 @@ class QGDBPlugin:
                 cursor.execute("SELECT layer_name, title FROM qgdb_layers WHERE dataset_name = ? ORDER BY layer_name", (ds_name,))
                 layers = cursor.fetchall()
                 
-                if not layers: continue
+                if not layers:
+                    continue
                 
                 ds_group = main_group.addGroup(f"📁 {ds_title or ds_name}")
                 

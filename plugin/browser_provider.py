@@ -144,10 +144,10 @@ if QGIS_AVAILABLE:
             """Devuelve las capacidades del proveedor para QGIS 3.44+."""
             try:
                 return Qgis.DataItemProviderCapability.Files
-            except Exception:
+            except (AttributeError, TypeError):
                 try:
                     return Qgis.DataItemProviderCapabilities(Qgis.DataItemProviderCapability.Files)
-                except Exception:
+                except (AttributeError, TypeError):
                     return 1
 
         def createDataItem(self, path, parentItem):

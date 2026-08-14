@@ -27,28 +27,30 @@ def _get_qgdb_engine_class():
     try:
         from .core.qgdb_engine import QGDBEngine
         return QGDBEngine
-    except Exception:
+    except ImportError:
         try:
             from core.qgdb_engine import QGDBEngine
             return QGDBEngine
-        except Exception:
-            # Importación absoluta desde plugin_dir
+        except ImportError:
             core_path = os.path.join(plugin_dir, "core")
-            if core_path not in sys.path: sys.path.insert(0, core_path)
+            if core_path not in sys.path:
+                sys.path.insert(0, core_path)
             from qgdb_engine import QGDBEngine
             return QGDBEngine
+
 
 def _get_converter_class():
     try:
         from .converters.gdb2qgdb import GDB2QGDBConverter
         return GDB2QGDBConverter
-    except Exception:
+    except ImportError:
         try:
             from converters.gdb2qgdb import GDB2QGDBConverter
             return GDB2QGDBConverter
-        except Exception:
+        except ImportError:
             conv_path = os.path.join(plugin_dir, "converters")
-            if conv_path not in sys.path: sys.path.insert(0, conv_path)
+            if conv_path not in sys.path:
+                sys.path.insert(0, conv_path)
             from gdb2qgdb import GDB2QGDBConverter
             return GDB2QGDBConverter
 
@@ -149,13 +151,14 @@ class NewQGDBDialog(QDialog):
             try:
                 from .profiles.ladm_col import LADMCOLProfileBuilder
                 spec = LADMCOLProfileBuilder.get_ladm_col_spec()
-            except Exception:
+            except ImportError:
                 try:
                     from profiles.ladm_col import LADMCOLProfileBuilder
                     spec = LADMCOLProfileBuilder.get_ladm_col_spec()
-                except Exception:
+                except ImportError:
                     prof_path = os.path.join(plugin_dir, "profiles")
-                    if prof_path not in sys.path: sys.path.insert(0, prof_path)
+                    if prof_path not in sys.path:
+                        sys.path.insert(0, prof_path)
                     from ladm_col import LADMCOLProfileBuilder
                     spec = LADMCOLProfileBuilder.get_ladm_col_spec()
             spec["metadata"]["crs"] = crs_auth
