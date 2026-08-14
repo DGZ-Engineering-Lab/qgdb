@@ -1,11 +1,11 @@
 [general]
 name=QGDB Provider & Manager (LADM-COL Colombia)
 qgisMinimumVersion=3.22
-description=Proveedor nativo de geodatabase jerárquica QGDB (GeoPackage extendido) conforme a LADM-COL v3.0 y Catastro Multipropósito.
+description=Native hierarchical geodatabase provider QGDB (extended GeoPackage) compliant with Colombia LADM-COL v3.0, IGAC Cartography, and ESRI FileGDB migration.
 version=1.0.0
 author=DevGiz.vercel.app
 email=agaviria@gmail.com
-about=Gestión de Feature Datasets, Dominios, Relaciones 1:N y Reglas de Topología en QGIS con interoperabilidad ESRI (.gdb).
+about=Comprehensive spatial database management for QGIS featuring Feature Datasets hierarchy, attribute domains, 1:N relationships, topology rules, and full ESRI File Geodatabase (.gdb) bidirectional conversion. Designed for Colombia Cadastral & Cartographic official standards (LADM-COL / IGAC).
 category=Database
 tags=qgdb,geodatabase,ladm-col,catastro,colombia,gdb,geopackage,datasets,dominios
 homepage=https://devgiz.vercel.app/
